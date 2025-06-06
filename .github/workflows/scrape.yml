@@ -26,9 +26,12 @@ jobs:
           node-version: '18'
       
       - name: Install dependencies
-        run: |
-          npm install
-          npx playwright install chromium
+        run: npm install
+      
+      - name: Install Playwright Browsers
+        uses: playwright-community/setup-playwright@v1
+        with:
+          browsers: chromium
       
       - name: Debug environment
         run: |
