@@ -28,10 +28,10 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Install Playwright Browsers
-        uses: playwright-community/setup-playwright@v1
+      - name: Install Playwright
+        uses: microsoft/playwright-github-action@v1
         with:
-          browsers: chromium
+          version: 1.52.0
       
       - name: Debug environment
         run: |
