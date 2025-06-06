@@ -4,6 +4,11 @@ const dayjs = require('dayjs');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
+// Debug environment variables
+console.log('Environment variables check:');
+console.log('SUPABASE_URL exists:', !!process.env.SUPABASE_URL);
+console.log('SUPABASE_KEY exists:', !!process.env.SUPABASE_KEY);
+
 // Initialize Supabase client
 const supabase = createClient(
     process.env.SUPABASE_URL,

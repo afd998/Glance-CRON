@@ -9,7 +9,7 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.42.1-jammy
+      image: mcr.microsoft.com/playwright:v1.52.0-jammy
     strategy:
       matrix:
         offset: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]  # ±5 days from current
@@ -24,6 +24,11 @@ jobs:
       
       - name: Install dependencies
         run: npm install @supabase/supabase-js
+        
+      - name: Debug environment
+        run: |
+          echo "SUPABASE_URL is set: ${{ env.SUPABASE_URL != '' }}"
+          echo "SUPABASE_KEY is set: ${{ env.SUPABASE_KEY != '' }}"
         
       - name: Run scraper
         run: node scrape.js ${{ matrix.offset }} 
