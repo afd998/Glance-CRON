@@ -1,0 +1,29 @@
+name: Scrape Calendar Data
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # every 10 minutes
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.42.1-jammy
+    strategy:
+      matrix:
+        offset: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]  # ±5 days from current
+      max-parallel: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+        
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }} 
