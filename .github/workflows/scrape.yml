@@ -8,8 +8,6 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.52.0-jammy
     strategy:
       matrix:
         offset: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]  # ±5 days from current
@@ -22,9 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
       - name: Install dependencies
-        run: npm install @supabase/supabase-js
-        
+        run: |
+          npm install
+          npx playwright install chromium
+      
       - name: Debug environment
         run: |
           echo "SUPABASE_URL is set: ${{ env.SUPABASE_URL != '' }}"
