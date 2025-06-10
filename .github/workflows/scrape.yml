@@ -11,8 +11,6 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.52.0-jammy
     strategy:
       matrix:
         offset: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]  # ±5 days from current
@@ -33,17 +31,17 @@ jobs:
           node-version: '18'
           cache: 'npm'
       
-      - name: Install dependencies
+      - name: Install Playwright
         run: |
-          pwd
-          ls -la
-          npm install --verbose
-          ls -la node_modules/@supabase
+          npm install
+          npx playwright install --with-deps chromium
       
       - name: Debug environment
         run: |
           echo "SUPABASE_URL is set: ${{ env.SUPABASE_URL != '' }}"
           echo "SUPABASE_KEY is set: ${{ env.SUPABASE_KEY != '' }}"
+          ls -la node_modules/@supabase
+          cat package.json
         
       - name: Run scraper
         run: node scrape.js ${{ matrix.offset }} 
