@@ -9,7 +9,7 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.52.0
+      image: mcr.microsoft.com/playwright:v1.52.0-jammy
     strategy:
       matrix:
         offset: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]  # ±5 days from current
@@ -23,8 +23,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Install dependencies
-        run: |
-          npm install
+        run: npm install
       
       - name: Debug environment
         run: |
