@@ -30,11 +30,12 @@ async function saveToSupabase(data, date) {
             .from('25liveData')
             .upsert(
                 data.map(event => ({
-                    ...event,
-                    scraped_date: date,
+                    id: event.itemId,
+                    event_data: JSON.stringify(event),
+                    scraped_date: new Date(date).toISOString(),  // Convert to ISO string with timezone
                     updated_at: new Date().toISOString()
                 })),
-                { onConflict: 'itemId' }
+                { onConflict: 'id' }
             );
         
         if (error) throw error;
