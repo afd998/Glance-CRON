@@ -25,7 +25,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npx playwright install-deps
       
       - name: Debug environment
         run: |
