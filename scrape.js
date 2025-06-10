@@ -31,11 +31,14 @@ async function saveToSupabase(data, date) {
         
         console.log(`Original data length: ${data.length}, Deduplicated length: ${uniqueData.length}`);
         
+        // Convert date to numeric format (YYYYMMDD)
+        const numericDate = parseInt(date.replace(/-/g, ''));
+        
         const { data: result, error } = await supabase
             .from('25liveData')
             .upsert(
                 [{
-                    id: date,  // Use the date as the id
+                    id: numericDate,  // Use numeric date as id
                     events_data: JSON.stringify(uniqueData),  // Store all events as one JSON array
                     scraped_date: new Date(date).toISOString(),
                     updated_at: new Date().toISOString()
