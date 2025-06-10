@@ -36,7 +36,7 @@ async function saveToSupabase(data, date) {
             .upsert(
                 [{
                     id: date,  // Use the date as the id
-                    event_data: JSON.stringify(uniqueData),  // Store all events as one JSON array
+                    events_data: JSON.stringify(uniqueData),  // Store all events as one JSON array
                     scraped_date: new Date(date).toISOString(),
                     updated_at: new Date().toISOString()
                 }],
