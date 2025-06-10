@@ -5,6 +5,9 @@ on:
     - cron: '*/10 * * * *'  # every 10 minutes
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -20,7 +23,9 @@ jobs:
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       
       - name: Install dependencies
         run: npm install
