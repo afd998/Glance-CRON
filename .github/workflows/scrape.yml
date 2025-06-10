@@ -26,12 +26,9 @@ jobs:
           node-version: '18'
       
       - name: Install dependencies
-        run: npm install
-      
-      - name: Install Playwright
-        uses: microsoft/playwright-github-action@v1
-        with:
-          version: 1.52.0
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
       
       - name: Debug environment
         run: |
