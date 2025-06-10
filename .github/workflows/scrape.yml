@@ -31,17 +31,21 @@ jobs:
           node-version: '18'
           cache: 'npm'
       
-      - name: Install Playwright
+      - name: Install dependencies
         run: |
-          npm install
-          npx playwright install --with-deps chromium
+          rm -rf node_modules package-lock.json
+          cat package.json
+          npm install --verbose
+          ls -la node_modules/@supabase
+          npm list
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
       
       - name: Debug environment
         run: |
           echo "SUPABASE_URL is set: ${{ env.SUPABASE_URL != '' }}"
           echo "SUPABASE_KEY is set: ${{ env.SUPABASE_KEY != '' }}"
-          ls -la node_modules/@supabase
-          cat package.json
         
       - name: Run scraper
         run: node scrape.js ${{ matrix.offset }} 
