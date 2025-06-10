@@ -26,20 +26,31 @@ async function initBrowser() {
 
 async function saveToSupabase(data, date) {
     try {
-        const { error } = await supabase
+        // Deduplicate data by id before upserting
+        const uniqueData = Array.from(new Map(data.map(event => [event.itemId, event])).values());
+        
+        console.log(`Original data length: ${data.length}, Deduplicated length: ${uniqueData.length}`);
+        
+        const { data: result, error } = await supabase
             .from('25liveData')
             .upsert(
-                data.map(event => ({
+                uniqueData.map(event => ({
                     id: event.itemId,
                     event_data: JSON.stringify(event),
-                    scraped_date: new Date(date).toISOString(),  // Convert to ISO string with timezone
+                    scraped_date: new Date(date).toISOString(),
                     updated_at: new Date().toISOString()
                 })),
-                { onConflict: 'id' }
+                { 
+                    onConflict: 'id',
+                    ignoreDuplicates: false
+                }
             );
         
-        if (error) throw error;
-        console.log(`Successfully saved ${data.length} events to Supabase`);
+        if (error) {
+            console.error('Supabase error details:', error);
+            throw error;
+        }
+        console.log(`Successfully saved ${uniqueData.length} events to Supabase`);
     } catch (error) {
         console.error('Error saving to Supabase:', error);
         throw error;
