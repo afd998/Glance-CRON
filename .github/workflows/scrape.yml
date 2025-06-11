@@ -2,19 +2,19 @@ name: Scrape Calendar Data
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # every 10 minutes
+    - cron: '*/30 * * * *'  # every 30 minutes
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  scrape:
+  scrape-window-1:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        offset: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]  # ±5 days from current
-      max-parallel: 10
+        offset: [-40, -39, -38, -37, -36, -35, -34, -33, -32, -31, -30, -29, -28, -27, -26, -25, -24, -23, -22, -21]  # -40 to -21
+      max-parallel: 20
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
@@ -34,18 +34,109 @@ jobs:
       - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
-          cat package.json
           npm install --verbose
-          ls -la node_modules/@supabase
-          npm list
       
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
       
-      - name: Debug environment
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-2:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [-20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1]  # -20 to -1
+      max-parallel: 20
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
         run: |
-          echo "SUPABASE_URL is set: ${{ env.SUPABASE_URL != '' }}"
-          echo "SUPABASE_KEY is set: ${{ env.SUPABASE_KEY != '' }}"
-        
+          rm -rf node_modules package-lock.json
+          npm install --verbose
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-3:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]  # 0 to 19
+      max-parallel: 20
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install --verbose
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-4:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]  # 20 to 40
+      max-parallel: 20
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install --verbose
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      
       - name: Run scraper
         run: node scrape.js ${{ matrix.offset }} 
