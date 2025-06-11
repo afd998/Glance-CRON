@@ -96,38 +96,58 @@ async function fetchData(startDate) {
       
       try {
           // Start at 25Live
+          console.log('Navigating to 25Live...');
           await page.goto('https://25live.collegenet.com/pro/northwestern#!/home/availability');
           
           // Wait for and click the Sign In button
+          console.log('Waiting for sign in button...');
           await page.waitForSelector('.c-nav-signin');
           await page.click('.c-nav-signin');
           
           // Wait for the login form and fill credentials
+          console.log('Filling login credentials...');
           await page.waitForSelector('input[id="idToken1"]');
           await page.fill('input[id="idToken1"]', process.env.NORTHWESTERN_USERNAME);
           await page.fill('input[id="idToken2"]', process.env.NORTHWESTERN_PASSWORD);
           
           // Click login and wait for navigation
+          console.log('Submitting login form...');
           await page.click('input[id="loginButton_0"]');
           await page.waitForNavigation();
           
           // Wait for the main 25Live page to load
+          console.log('Waiting for main page to load...');
           await page.waitForSelector('div[ui-view="availability"]');
           
           // Get cookies for authentication
+          console.log('Getting authentication cookies...');
           const cookies = await context.cookies();
+          console.log('Number of cookies received:', cookies.length);
+          console.log('Cookie names:', cookies.map(c => c.name).join(', '));
+          
           const cookieString = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
           
           // Fetch the availability data with the provided date
+          console.log(`Fetching data for date: ${startDate}`);
           const response = await fetch(`https://25live.collegenet.com/25live/data/northwestern/run/availability/availabilitydata.json?obj_cache_accl=0&start_dt=${startDate}&comptype=availability_home&compsubject=location&page_size=100&space_favorite=T&include=closed+blackouts+pending+related+empty&caller=pro-AvailService.getData`, {
               headers: {
-                  'Cookie': cookieString
+                  'Cookie': cookieString,
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest'
               }
           });
-          const rawData = await response.json();
           
-         
-         
+          const rawData = await response.json();
+          console.log('API Response status:', response.status);
+          console.log('API Response headers:', JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
+          console.log('API Response data structure:', {
+              hasSubjects: !!rawData.subjects,
+              pageCount: rawData.page_count,
+              lastUpdate: rawData.lastupdate,
+              compType: rawData.comptype
+          });
+          
           if (rawData.subjects) {
           
               const firstSubject = rawData.subjects[0];
@@ -137,6 +157,7 @@ async function fetchData(startDate) {
         
           // Check if we have valid data
           if (!rawData || !rawData.subjects) {
+              console.error('Invalid data received. Full response:', JSON.stringify(rawData, null, 2));
               throw new Error('Invalid data received from API: ' + JSON.stringify(rawData));
           }
          
