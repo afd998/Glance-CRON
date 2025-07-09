@@ -192,8 +192,8 @@ function processData(rawData) {
     const endHour = Math.floor(endTime);
     const endMinute = Math.round((endTime - endHour) * 60);
     
-    // Create timestamp strings (assuming events are on the scraped date)
-    const eventDate = new Date(event.event_date || new Date());
+    // Create timestamp strings using the subject_item_date
+    const eventDate = new Date(event.subject_item_date || new Date());
     const startTimestamp = new Date(eventDate);
     startTimestamp.setHours(startHour, startMinute, 0, 0);
     
