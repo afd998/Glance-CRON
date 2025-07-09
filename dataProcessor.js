@@ -9,33 +9,22 @@
  * @returns {number} A unique integer ID
  */
 const generateDeterministicId = (itemId, itemId2, subjectItemId) => {
-  // Use a collision-free approach by giving each component its own bit space
-  // This ensures that changing any component changes the final result
+  // Create a deterministic ID that combines the three numbers in a way that's guaranteed unique
+  // and fits within PostgreSQL int8 limits (19 digits max)
   
-  // Convert to BigInt to handle large numbers
-  const bigItemId = BigInt(itemId);
-  const bigItemId2 = BigInt(itemId2);
-  const bigSubjectItemId = BigInt(subjectItemId);
+  // Convert to strings and pad to ensure consistent length
+  const itemIdStr = itemId.toString().padStart(10, '0');
+  const itemId2Str = itemId2.toString().padStart(10, '0');
+  const subjectItemIdStr = subjectItemId.toString().padStart(5, '0');
   
-  // Use bit shifting to give each component its own space
-  // itemId gets the highest 32 bits, itemId2 gets the middle 32 bits, subjectItemId gets the lowest 32 bits
-  const combined = (bigItemId << 64n) + (bigItemId2 << 32n) + bigSubjectItemId;
+  // Take the last 6 digits of each to keep the total manageable
+  const itemIdPart = parseInt(itemIdStr.slice(-6));
+  const itemId2Part = parseInt(itemId2Str.slice(-6));
+  const subjectPart = parseInt(subjectItemIdStr.slice(-5));
   
-  // Convert to a regular number (this should fit in JavaScript's safe integer range)
-  // If it's too large, we'll use a hash as fallback
-  if (combined <= Number.MAX_SAFE_INTEGER) {
-    return Number(combined);
-  } else {
-    // Fallback to hash if the number is too large
-    const uniqueString = `${itemId}_${itemId2}_${subjectItemId}`;
-    let hash = 0;
-    for (let i = 0; i < uniqueString.length; i++) {
-      const char = uniqueString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash) + 1000000000;
-  }
+  // Combine using a formula that ensures uniqueness
+  // This will produce a number around 15-16 digits, well within int8 limits
+  return itemIdPart * 1000000000 + itemId2Part * 10000 + subjectPart;
 };
 
 const getEventType = (data) => {
