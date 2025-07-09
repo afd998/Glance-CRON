@@ -105,7 +105,7 @@ async function fetchData(startDate) {
           
           const rawData = await response.json();
           console.log('API Response status:', response.status);
-          console.log('API Response headers:', JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
+          console.log('API Response status:', response.status);
           console.log('API Response data structure:', {
               hasSubjects: !!rawData.subjects,
               pageCount: rawData.page_count,
@@ -172,7 +172,6 @@ async function fetchData(startDate) {
                       ...item,
                       itemDetails: itemDetails.evdetail
                   };
-                  console.log('Event with details:', JSON.stringify(eventWithDetails, null, 2));
                   return eventWithDetails;
               } catch (error) {
                   console.error(`Error processing item ${item.itemId}:`, error.message);
@@ -181,7 +180,6 @@ async function fetchData(startDate) {
                       itemDetails: null,
                       error: error.message
                   };
-                  console.log('Event with details (error case):', JSON.stringify(eventWithDetails, null, 2));
                   return eventWithDetails;
               }
           });
