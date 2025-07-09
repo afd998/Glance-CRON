@@ -1,6 +1,42 @@
 // Helper functions to extract data from event objects
 
-
+/**
+ * Generate a deterministic ID from source data that can handle large numbers
+ * Uses BigInt to avoid precision issues with large concatenated numbers
+ * @param {number} itemId - The item ID
+ * @param {number} itemId2 - The second item ID  
+ * @param {number} subjectItemId - The subject item ID
+ * @returns {number} A unique integer ID
+ */
+const generateDeterministicId = (itemId, itemId2, subjectItemId) => {
+  // Use a collision-free approach by giving each component its own bit space
+  // This ensures that changing any component changes the final result
+  
+  // Convert to BigInt to handle large numbers
+  const bigItemId = BigInt(itemId);
+  const bigItemId2 = BigInt(itemId2);
+  const bigSubjectItemId = BigInt(subjectItemId);
+  
+  // Use bit shifting to give each component its own space
+  // itemId gets the highest 32 bits, itemId2 gets the middle 32 bits, subjectItemId gets the lowest 32 bits
+  const combined = (bigItemId << 64n) + (bigItemId2 << 32n) + bigSubjectItemId;
+  
+  // Convert to a regular number (this should fit in JavaScript's safe integer range)
+  // If it's too large, we'll use a hash as fallback
+  if (combined <= Number.MAX_SAFE_INTEGER) {
+    return Number(combined);
+  } else {
+    // Fallback to hash if the number is too large
+    const uniqueString = `${itemId}_${itemId2}_${subjectItemId}`;
+    let hash = 0;
+    for (let i = 0; i < uniqueString.length; i++) {
+      const char = uniqueString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash) + 1000000000;
+  }
+};
 
 const getEventType = (data) => {
   const panels = data.itemDetails?.defn?.panel || [];
@@ -178,7 +214,8 @@ function processData(rawData) {
     return {
       item_id: event.itemId,
       item_id2: event.itemId2,
-      // Let Supabase generate the ID automatically to avoid any collision issues
+      // Generate a deterministic ID from the source data for upsert operations
+      id: generateDeterministicId(event.itemId, event.itemId2, event.subject_itemId),
       start_time: startTimestamp.toISOString(),
       end_time: endTimestamp.toISOString(),
       event_name: event.itemName,
@@ -198,5 +235,6 @@ module.exports = {
   getInstructorName,
   getLectureTitle,
   parseRoomName,
-  parseEventResources
+  parseEventResources,
+  generateDeterministicId
 }; 

@@ -37,7 +37,10 @@ async function saveToSupabase(processedEvents) {
         
         const { data: result, error } = await supabase
             .from('events')
-            .insert(processedEvents);
+            .upsert(processedEvents, {
+                onConflict: 'id',
+                ignoreDuplicates: false
+            });
         
         if (error) {
             console.error('Supabase error details:', error);
