@@ -126,13 +126,19 @@ const parseEventResources = (event) => {
     item.itemName === "KSM-KGH-AV-SRS Clickers (polling)"
   );
 
+  // Simplify resources to just itemName and quantity
+  const simplifiedResources = resources.map(resource => ({
+    itemName: resource.itemName,
+    quantity: resource.quantity
+  }));
+
   return {
     hasVideoRecording,
     hasHandheldMic,
     hasStaffAssistance,
     hasWebConference,
     hasClickers,
-    resources
+    resources: simplifiedResources
   };
 };
 
@@ -166,15 +172,11 @@ function processData(rawData) {
       id: parseInt(`${event.itemId}${event.itemId2}${event.subject_itemId}`),
       start_time: startTimestamp.toISOString(),
       end_time: endTimestamp.toISOString(),
+      event_name: event.itemName,
       event_type: getEventType(event),
       instructor_name: getInstructorName(event),
       lecture_title: getLectureTitle(event),
       room_name: parseRoomName(event.subject_itemName),
-      has_video_recording: parseEventResources(event).hasVideoRecording,
-      has_handheld_mic: parseEventResources(event).hasHandheldMic,
-      has_staff_assistance: parseEventResources(event).hasStaffAssistance,
-      has_web_conference: parseEventResources(event).hasWebConference,
-      has_clickers: parseEventResources(event).hasClickers,
       resources: parseEventResources(event).resources,
       raw: event
     };
