@@ -168,7 +168,6 @@ function processData(rawData) {
     return {
       item_id: event.itemId,
       item_id2: event.itemId2,
-      subject_item_id: event.subject_itemId,
       id: parseInt(`${event.itemId}${event.itemId2}${event.subject_itemId}`),
       start_time: startTimestamp.toISOString(),
       end_time: endTimestamp.toISOString(),
