@@ -1,4 +1,7 @@
 // Helper functions to extract data from event objects
+
+
+
 const getEventType = (data) => {
   const panels = data.itemDetails?.defn?.panel || [];
   for (const panel of panels) {
@@ -146,7 +149,14 @@ const parseEventResources = (event) => {
 function processData(rawData) {
   console.log(`Processing ${rawData.length} events to extract additional properties...`);
   
-  return rawData.map(event => {
+  // Filter out events where itemId or itemId2 equals 0
+  const filteredData = rawData.filter(event => {
+    return event.itemId !== 0 && event.itemId2 !== 0;
+  });
+  
+  console.log(`Filtered out ${rawData.length - filteredData.length} events with itemId or itemId2 equal to 0`);
+  
+  return filteredData.map(event => {
     // Convert time strings to timestamps
     const startTime = parseFloat(event.start);
     const endTime = parseFloat(event.end);
@@ -168,7 +178,7 @@ function processData(rawData) {
     return {
       item_id: event.itemId,
       item_id2: event.itemId2,
-      id: parseInt(`${event.itemId}${event.itemId2}${event.subject_itemId}`),
+      // Let Supabase generate the ID automatically to avoid any collision issues
       start_time: startTimestamp.toISOString(),
       end_time: endTimestamp.toISOString(),
       event_name: event.itemName,

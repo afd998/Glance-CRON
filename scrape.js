@@ -35,32 +35,9 @@ async function saveToSupabase(processedEvents) {
     try {
         console.log(`Saving ${processedEvents.length} events to Supabase...`);
         
-        // Check for duplicates and log them
-        const idCounts = {};
-        processedEvents.forEach(event => {
-            const id = event.id;
-            if (!idCounts[id]) {
-                idCounts[id] = [];
-            }
-            idCounts[id].push(event);
-        });
-        
-        // Log duplicates
-        Object.entries(idCounts).forEach(([id, events]) => {
-            if (events.length > 1) {
-                console.log(`Duplicate ID found: ${id}`);
-                events.forEach((event, index) => {
-                    console.log(`  Event ${index + 1}: itemId=${event.item_id}, itemId2=${event.item_id2}, event_type=${event.event_type}, room_name=${event.room_name}`);
-                });
-            }
-        });
-        
         const { data: result, error } = await supabase
             .from('events')
-            .upsert(processedEvents, {
-                onConflict: 'id',
-                ignoreDuplicates: false
-            });
+            .insert(processedEvents);
         
         if (error) {
             console.error('Supabase error details:', error);
