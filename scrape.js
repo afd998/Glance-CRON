@@ -3,90 +3,55 @@ const { chromium } = require('playwright');
 const dayjs = require('dayjs');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+const config = require('./config');
+const { processData } = require('./dataProcessor');
 
-// Debug environment variables
-console.log('Environment variables check:');
-console.log('SUPABASE_URL exists:', !!process.env.SUPABASE_URL);
-console.log('SUPABASE_KEY exists:', !!process.env.SUPABASE_KEY);
+// Validate configuration
+try {
+    config.validate();
+    console.log('Configuration validated successfully');
+} catch (error) {
+    console.error('Configuration error:', error.message);
+    process.exit(1);
+}
 
 // Initialize Supabase client
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY
-);
+const supabase = createClient(config.supabase.url, config.supabase.key);
 
 let browser;
 
 async function initBrowser() {
     if (!browser) {
-        browser = await chromium.launch();
+        browser = await chromium.launch({
+            headless: config.browser.headless
+        });
     }
     return browser;
 }
 
-async function saveToSupabase(data, date) {
+
+
+async function saveToSupabase(processedEvents) {
     try {
-        // Deduplicate data by id before saving
-        const uniqueData = Array.from(new Map(data.map(event => [event.itemId, event])).values());
-        
-        console.log(`Original data length: ${data.length}, Deduplicated length: ${uniqueData.length}`);
-        
-        // Convert date to numeric format (YYYYMMDD)
-        const numericDate = parseInt(date.replace(/-/g, ''));
+        console.log(`Saving ${processedEvents.length} events to Supabase...`);
         
         const { data: result, error } = await supabase
-            .from('25liveData')
-            .upsert(
-                [{
-                    id: numericDate,  // Use numeric date as id
-                    events_data: JSON.stringify(uniqueData),  // Store all events as one JSON array
-                    scraped_date: new Date(date).toISOString(),
-                    updated_at: new Date().toISOString()
-                }],
-                { 
-                    onConflict: 'id',
-                    ignoreDuplicates: false
-                }
-            );
+            .from('events')
+            .upsert(processedEvents, {
+                onConflict: 'id',
+                ignoreDuplicates: false
+            });
         
         if (error) {
             console.error('Supabase error details:', error);
             throw error;
         }
-        console.log(`Successfully saved ${uniqueData.length} events to Supabase for date ${date}`);
+        console.log(`Successfully saved ${processedEvents.length} events to Supabase`);
     } catch (error) {
         console.error('Error saving to Supabase:', error);
         throw error;
     }
 }
-
-(async () => {
-    try {
-        const offset = parseInt(process.argv[2], 10); // from GitHub matrix
-        const date = dayjs().add(offset, 'day').format('YYYY-MM-DD');
-
-        console.log(`Scraping data for ${date}`);
-
-        browser = await initBrowser();
-        const data = await fetchData(date);
-        
-        // Save to Supabase
-        await saveToSupabase(data, date);
-        
-        // Also save locally as backup
-        const outputPath = `output-${date}.json`;
-        fs.writeFileSync(outputPath, JSON.stringify(data, null, 2));
-        console.log(`Data saved to ${outputPath}`);
-
-    } catch (error) {
-        console.error('Error in main process:', error);
-        process.exit(1);
-    } finally {
-        if (browser) {
-            await browser.close();
-        }
-    }
-})();
 
 async function fetchData(startDate) {
   try {
@@ -203,23 +168,21 @@ async function fetchData(startDate) {
                       }
                   );
                   const itemDetails = await itemDetailsResponse.json();
-                  const eventWithUrl = {
+                  const eventWithDetails = {
                       ...item,
-                      itemDetails: itemDetails.evdetail,
-                      eventUrl: `https://25live.collegenet.com/pro/northwestern#!/home/event/${item.itemId}/details`
+                      itemDetails: itemDetails.evdetail
                   };
-                  console.log('Event with URL:', JSON.stringify(eventWithUrl, null, 2));
-                  return eventWithUrl;
+                  console.log('Event with details:', JSON.stringify(eventWithDetails, null, 2));
+                  return eventWithDetails;
               } catch (error) {
                   console.error(`Error processing item ${item.itemId}:`, error.message);
-                  const eventWithUrl = {
+                  const eventWithDetails = {
                       ...item,
                       itemDetails: null,
-                      eventUrl: `https://25live.collegenet.com/pro/northwestern#!/home/event/${item.itemId}/details`,
                       error: error.message
                   };
-                  console.log('Event with URL (error case):', JSON.stringify(eventWithUrl, null, 2));
-                  return eventWithUrl;
+                  console.log('Event with details (error case):', JSON.stringify(eventWithDetails, null, 2));
+                  return eventWithDetails;
               }
           });
 
@@ -243,3 +206,34 @@ async function fetchData(startDate) {
       throw error;
   }
 }
+
+(async () => {
+    try {
+        const offset = parseInt(process.argv[2], 10); // from GitHub matrix
+        const date = dayjs().add(offset, 'day').format('YYYY-MM-DD');
+
+        console.log(`Scraping data for ${date}`);
+
+        browser = await initBrowser();
+        const data = await fetchData(date);
+        
+        // Process the data to extract additional properties
+        const processedData = processData(data);
+        
+        // Save to Supabase
+        await saveToSupabase(processedData);
+        
+        // Also save locally as backup
+        const outputPath = `output-${date}.json`;
+        fs.writeFileSync(outputPath, JSON.stringify(processedData, null, 2));
+        console.log(`Data saved to ${outputPath}`);
+
+    } catch (error) {
+        console.error('Error in main process:', error);
+        process.exit(1);
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
+    }
+})();

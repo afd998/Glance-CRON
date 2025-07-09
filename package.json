@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape": "node scrape.js",
+    "scrape:today": "node scrape.js 0",
+    "scrape:tomorrow": "node scrape.js 1",
+    "scrape:yesterday": "node scrape.js -1"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +16,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
     "dayjs": "^1.11.13",
+    "dotenv": "^16.3.1",
     "playwright": "^1.52.0"
   }
 }
