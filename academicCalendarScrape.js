@@ -7,6 +7,38 @@ const config = require('./config');
 // Initialize Supabase client
 const supabase = createClient(config.supabase.url, config.supabase.key);
 
+// Function to decode HTML entities
+function decodeHtmlEntities(text) {
+    if (!text) return text;
+    
+    const htmlEntities = {
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&#39;': "'",
+        '&apos;': "'",
+        '&nbsp;': ' ',
+        '&copy;': '©',
+        '&reg;': '®',
+        '&trade;': '™',
+        '&hellip;': '…',
+        '&mdash;': '—',
+        '&ndash;': '–',
+        '&lsquo;': "'",
+        '&rsquo;': "'",
+        '&ldquo;': '"',
+        '&rdquo;': '"'
+    };
+    
+    let decodedText = text;
+    for (const [entity, replacement] of Object.entries(htmlEntities)) {
+        decodedText = decodedText.replace(new RegExp(entity, 'g'), replacement);
+    }
+    
+    return decodedText;
+}
+
 async function fetchAcademicCalendar() {
     return new Promise((resolve, reject) => {
         const options = {
@@ -77,8 +109,8 @@ async function parseAcademicCalendar(html) {
             return;
         }
         
-        // Extract the header text (remove HTML tags)
-        const headerText = headerMatch[0].replace(/<[^>]*>/g, '').trim();
+        // Extract the header text (remove HTML tags and decode entities)
+        const headerText = decodeHtmlEntities(headerMatch[0].replace(/<[^>]*>/g, '').trim());
         console.log(`Header text: "${headerText}"`);
         
         // Find all cells in this section
@@ -111,8 +143,8 @@ async function parseAcademicCalendar(html) {
                         let labelText = '';
                         if (cellIndex + 1 < cellMatches.length) {
                             const nextCell = cellMatches[cellIndex + 1];
-                            // Extract text content from the next cell (remove HTML tags)
-                            labelText = nextCell.replace(/<[^>]*>/g, '').trim();
+                            // Extract text content from the next cell (remove HTML tags and decode entities)
+                            labelText = decodeHtmlEntities(nextCell.replace(/<[^>]*>/g, '').trim());
                         }
                         
                         // Convert date string to ISO format for Supabase
