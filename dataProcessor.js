@@ -174,12 +174,14 @@ const parseEventResources = (event) => {
 function processData(rawData) {
   console.log(`Processing ${rawData.length} events to extract additional properties...`);
   
-  // Filter out events where itemId or itemId2 equals 0
+  // Filter out events where itemId or itemId2 equals 0, or subject_itemName contains ampersand
   const filteredData = rawData.filter(event => {
-    return event.itemId !== 0 && event.itemId2 !== 0;
+    return event.itemId !== 0 && 
+           event.itemId2 !== 0 && 
+           !event.subject_itemName?.includes('&');
   });
   
-  console.log(`Filtered out ${rawData.length - filteredData.length} events with itemId or itemId2 equal to 0`);
+  console.log(`Filtered out ${rawData.length - filteredData.length} events with itemId/itemId2 equal to 0 or containing ampersand in room name`);
   
   return filteredData.map(event => {
     // Convert time strings to timestamps
