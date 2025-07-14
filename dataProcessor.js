@@ -172,6 +172,12 @@ const parseEventResources = (event) => {
 
 // Process the raw event data to extract and add processed properties
 function processData(rawData) {
+  // Handle case where rawData is undefined (no events)
+  if (!rawData || !Array.isArray(rawData)) {
+    console.log('No events to process');
+    return [];
+  }
+  
   console.log(`Processing ${rawData.length} events to extract additional properties...`);
   
   // Filter out events where itemId or itemId2 equals 0, or subject_itemName contains ampersand
