@@ -194,19 +194,29 @@ function processData(rawData) {
     
     // Create timestamp strings using the subject_item_date
     const eventDate = new Date(event.subject_item_date || new Date());
+    
+    // Create timestamps that represent the local time
+    // We need to adjust for timezone offset to store as local time
+    const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000; // Convert minutes to milliseconds
+    
     const startTimestamp = new Date(eventDate);
     startTimestamp.setHours(startHour, startMinute, 0, 0);
     
     const endTimestamp = new Date(eventDate);
     endTimestamp.setHours(endHour, endMinute, 0, 0);
     
+    // Store as ISO strings adjusted for timezone
+    // This ensures the times are stored as local time, not UTC
+    const startTimeISO = new Date(startTimestamp.getTime() + timezoneOffset).toISOString();
+    const endTimeISO = new Date(endTimestamp.getTime() + timezoneOffset).toISOString();
+    
     return {
       item_id: event.itemId,
       item_id2: event.itemId2,
       // Generate a deterministic ID from the source data for upsert operations
       id: generateDeterministicId(event.itemId, event.itemId2, event.subject_itemId),
-      start_time: startTimestamp.toISOString(),
-      end_time: endTimestamp.toISOString(),
+      start_time: startTimeISO,
+      end_time: endTimeISO,
       event_name: event.itemName,
       event_type: getEventType(event),
       instructor_name: getInstructorName(event),
