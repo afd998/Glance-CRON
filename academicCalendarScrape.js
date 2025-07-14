@@ -113,6 +113,10 @@ async function parseAcademicCalendar(html) {
         const headerText = decodeHtmlEntities(headerMatch[0].replace(/<[^>]*>/g, '').trim());
         console.log(`Header text: "${headerText}"`);
         
+        // Check if this section is "Fall Pre-Term" - if so, don't mark any events as start_of_quarter
+        const isFallPreTerm = headerText.toLowerCase().includes('fall pre-term');
+        console.log(`Is Fall Pre-Term section: ${isFallPreTerm}`);
+        
         // Find all cells in this section
         const cellRegex = /<div[^>]*class="[^"]*layout-grid__cell[^"]*"[^>]*>(.*?)<\/div>/gs;
         const cellMatches = section.match(cellRegex);
@@ -194,8 +198,9 @@ async function parseAcademicCalendar(html) {
                         const id = Math.abs(hash) % Number.MAX_SAFE_INTEGER;
                         
                         // Set start_of_quarter to true for the first event found in this section
-                        const isFirstEvent = !firstEventFound;
-                        if (isFirstEvent) {
+                        // But exclude Fall Pre-Term sections
+                        const isFirstEvent = !firstEventFound && !isFallPreTerm;
+                        if (!firstEventFound) {
                             firstEventFound = true;
                         }
                         
