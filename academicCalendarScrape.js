@@ -124,6 +124,9 @@ async function parseAcademicCalendar(html) {
         
         console.log(`Found ${cellMatches.length} cells in this section`);
         
+        // Track if we've found the first event in this section
+        let firstEventFound = false;
+        
         cellMatches.forEach((cell, cellIndex) => {
             // Find strong tags in the cell (both <strong> and <b> tags)
             const strongRegex = /<(strong|b)[^>]*>(.*?)<\/(strong|b)>/gs;
@@ -139,6 +142,8 @@ async function parseAcademicCalendar(html) {
                         const headerSuffix = headerText.slice(-4);
                         const dateString = `${strongText} ${headerSuffix}`;
                         
+                        console.log(`  Parsing date: "${strongText}" + "${headerSuffix}" = "${dateString}"`);
+                        
                         // Get the label from the next cell
                         let labelText = '';
                         if (cellIndex + 1 < cellMatches.length) {
@@ -150,12 +155,31 @@ async function parseAcademicCalendar(html) {
                         // Convert date string to ISO format for Supabase
                         let isoDate = null;
                         try {
+                            // Try to parse the date more carefully
                             const dateObj = new Date(dateString);
+                            console.log(`  Parsed date object: ${dateObj.toISOString()}`);
+                            
                             if (!isNaN(dateObj.getTime())) {
-                                isoDate = dateObj.toISOString();
+                                // Check if the year seems reasonable (should be current year or next year)
+                                const currentYear = new Date().getFullYear();
+                                const parsedYear = dateObj.getFullYear();
+                                
+                                console.log(`  Year check: parsed=${parsedYear}, current=${currentYear}`);
+                                
+                                // If the parsed year is more than 1 year in the future, it might be wrong
+                                if (parsedYear > currentYear + 1) {
+                                    console.log(`  Warning: Parsed year ${parsedYear} seems too far in the future`);
+                                    // Try to fix by using current year
+                                    const fixedDate = new Date(dateString);
+                                    fixedDate.setFullYear(currentYear);
+                                    console.log(`  Fixed date: ${fixedDate.toISOString()}`);
+                                    isoDate = fixedDate.toISOString();
+                                } else {
+                                    isoDate = dateObj.toISOString();
+                                }
                             }
                         } catch (error) {
-                            console.log(`Could not parse date: ${dateString}`);
+                            console.log(`Could not parse date: ${dateString}`, error);
                         }
                         
                         // Create a unique hash from date_string and label
@@ -169,11 +193,18 @@ async function parseAcademicCalendar(html) {
                         // Convert to positive int8-compatible number
                         const id = Math.abs(hash) % Number.MAX_SAFE_INTEGER;
                         
+                        // Set start_of_quarter to true for the first event found in this section
+                        const isFirstEvent = !firstEventFound;
+                        if (isFirstEvent) {
+                            firstEventFound = true;
+                        }
+                        
                         const resultObject = {
                             id: id,
                             date: isoDate,
                             date_string: dateString, // Keep original string for reference
-                            label: labelText
+                            label: labelText,
+                            start_of_quarter: isFirstEvent
                         };
                         
                         results.push(resultObject);
@@ -246,9 +277,34 @@ async function saveToSupabase(parsedData) {
     }
 }
 
+async function clearAcademicCalendarData() {
+    try {
+        console.log('Clearing existing academic calendar data...');
+        
+        const { error } = await supabase
+            .from('academic_calendar')
+            .delete()
+            .neq('id', 0); // Delete all records
+        
+        if (error) {
+            console.error('Error clearing academic calendar data:', error);
+            throw error;
+        }
+        
+        console.log('Successfully cleared academic calendar data');
+        
+    } catch (error) {
+        console.error('Error clearing academic calendar data:', error);
+        throw error;
+    }
+}
+
 async function main() {
     try {
         console.log('Starting academic calendar scrape...');
+        
+        // Clear existing data first
+        await clearAcademicCalendarData();
         
         // Fetch the HTML
         const html = await fetchAcademicCalendar();
