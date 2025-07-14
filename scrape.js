@@ -121,9 +121,15 @@ async function fetchData(startDate) {
           }
         
           // Check if we have valid data
-          if (!rawData || !rawData.subjects) {
+          if (!rawData) {
               console.error('Invalid data received. Full response:', JSON.stringify(rawData, null, 2));
               throw new Error('Invalid data received from API: ' + JSON.stringify(rawData));
+          }
+
+          // If no subjects, there are no events for this day - exit gracefully
+          if (!rawData.subjects) {
+              console.log('No events found for this date - exiting');
+              return;
           }
          
           
