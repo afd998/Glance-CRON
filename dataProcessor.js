@@ -238,37 +238,9 @@ function processData(rawData) {
     // Create timestamp strings using the subject_item_date
     const eventDate = new Date(event.subject_item_date || new Date());
     
-    // Create timestamps in Chicago time
-    const chicagoTimezone = 'America/Chicago';
-    
-    const startTimestamp = new Date(eventDate);
-    startTimestamp.setHours(startHour, startMinute, 0, 0);
-    
-    const endTimestamp = new Date(eventDate);
-    endTimestamp.setHours(endHour, endMinute, 0, 0);
-    
-    // Convert to Chicago timezone and format as ISO string
-    const startTimeISO = startTimestamp.toLocaleString('en-US', { 
-      timeZone: chicagoTimezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6.000Z');
-    
-    const endTimeISO = endTimestamp.toLocaleString('en-US', { 
-      timeZone: chicagoTimezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6.000Z');
+    // Create ISO strings in Chicago time
+    const startTimeISO = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), startHour, startMinute, 0, 0).toISOString();
+    const endTimeISO = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), endHour, endMinute, 0, 0).toISOString();
     
     return {
       item_id: event.itemId,
