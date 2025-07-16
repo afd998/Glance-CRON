@@ -238,9 +238,8 @@ function processData(rawData) {
     // Create timestamp strings using the subject_item_date
     const eventDate = new Date(event.subject_item_date || new Date());
     
-    // Create timestamps that represent the local time
-    // We need to adjust for timezone offset to store as local time
-    const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000; // Convert minutes to milliseconds
+    // Create timestamps in Chicago time
+    const chicagoTimezone = 'America/Chicago';
     
     const startTimestamp = new Date(eventDate);
     startTimestamp.setHours(startHour, startMinute, 0, 0);
@@ -248,10 +247,28 @@ function processData(rawData) {
     const endTimestamp = new Date(eventDate);
     endTimestamp.setHours(endHour, endMinute, 0, 0);
     
-    // Store as ISO strings adjusted for timezone
-    // This ensures the times are stored as local time, not UTC
-    const startTimeISO = new Date(startTimestamp.getTime() + timezoneOffset).toISOString();
-    const endTimeISO = new Date(endTimestamp.getTime() + timezoneOffset).toISOString();
+    // Convert to Chicago timezone and format as ISO string
+    const startTimeISO = startTimestamp.toLocaleString('en-US', { 
+      timeZone: chicagoTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6.000Z');
+    
+    const endTimeISO = endTimestamp.toLocaleString('en-US', { 
+      timeZone: chicagoTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6.000Z');
     
     return {
       item_id: event.itemId,
