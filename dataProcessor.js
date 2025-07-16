@@ -115,57 +115,92 @@ const parseRoomName = (subjectItemName) => {
  * @returns {Object} Object containing boolean flags and resource list
  */
 const parseEventResources = (event) => {
-  // Find the matching reservation for the current date
-  const matchingReservation = event.itemDetails?.occur?.prof?.[0]?.rsv?.[0];
+  console.log(`\n=== DEBUG: parseEventResources for event ${event.itemId} ===`);
   
-  if (!matchingReservation || !matchingReservation.res) {
+  // Make a deep copy of the prof array if it exists
+  const profArray = event.itemDetails?.occur?.prof ? JSON.parse(JSON.stringify(event.itemDetails.occur.prof)) : null;
+  
+  console.log(`Event date: ${event.subject_item_date}`);
+  console.log(`Prof array exists: ${!!profArray}`);
+  console.log(`Prof array length: ${profArray?.length || 0}`);
+  
+  if (!profArray || !Array.isArray(profArray)) {
+    console.log('No prof array found, returning empty resources');
     return {
-      hasVideoRecording: false,
-      hasHandheldMic: false,
-      hasStaffAssistance: false,
-      hasWebConference: false,
-      hasClickers: false,
       resources: []
     };
   }
 
-  const resources = matchingReservation.res;
+  // Log each prof object structure
+  profArray.forEach((prof, index) => {
+    console.log(`Prof[${index}]:`, {
+      hasRsv: !!prof.rsv,
+      rsvLength: prof.rsv?.length || 0,
+      rsvStartDts: prof.rsv?.map(r => r.startDt) || []
+    });
+  });
 
-  // Compute boolean flags for quick checks
-  const hasVideoRecording = resources.some(item => 
-    item.itemName === "KSM-KGH-VIDEO-Recording (POST TO CANVAS)" || 
-    item.itemName === "KSM-KGH-VIDEO-Recording (PRIVATE LINK)" ||
-    item.itemName === "KSM-KGH-VIDEO-Recording"
-  );
-  
-  const hasHandheldMic = resources.some(item => 
-    item.itemName === "KSM-KGH-AV-Handheld Microphone"
-  );
-  
-  const hasStaffAssistance = resources.some(item => 
-    item.itemName === "KSM-KGH-AV-Staff Assistance"
-  );
-  
-  const hasWebConference = resources.some(item => 
-    item.itemName === "KSM-KGH-AV-Web Conference"
-  );
-  
-  const hasClickers = resources.some(item => 
-    item.itemName === "KSM-KGH-AV-SRS Clickers (polling)"
-  );
+  // Concatenate all rsv arrays from all prof objects
+  const allRsv = profArray.reduce((acc, prof) => {
+    if (prof.rsv && Array.isArray(prof.rsv)) {
+      return [...acc, ...prof.rsv];
+    }
+    return acc;
+  }, []);
 
-  // Simplify resources to just itemName and quantity
-  const simplifiedResources = resources.map(resource => ({
+  console.log(`Total rsv objects found: ${allRsv.length}`);
+  console.log('All rsv startDts:', allRsv.map(r => r.startDt));
+
+  if (allRsv.length === 0) {
+    console.log('No rsv objects found, returning empty resources');
+    return {
+      resources: []
+    };
+  }
+
+  // Find the reservation that matches the event date
+  const eventDate = event.subject_item_date;
+  console.log(`Looking for reservation matching date: ${eventDate}`);
+  
+  const matchingReservation = allRsv.find(rsv => {
+    if (!rsv.startDt) {
+      console.log(`Rsv has no startDt:`, rsv);
+      return false;
+    }
+    
+    // Extract just the date part from startDt (e.g., "2025-07-15" from "2025-07-15T13:00")
+    const reservationDate = rsv.startDt.split('T')[0];
+    // Also extract just the date part from eventDate (e.g., "2025-07-16" from "2025-07-16T00:00:00")
+    const eventDateOnly = eventDate.split('T')[0];
+    const matches = reservationDate === eventDateOnly;
+    console.log(`Comparing ${reservationDate} with ${eventDateOnly}: ${matches}`);
+    return matches;
+  });
+
+  console.log(`Matching reservation found: ${!!matchingReservation}`);
+  
+  if (!matchingReservation || !matchingReservation.res) {
+    console.log('No matching reservation or no res property, returning empty resources');
+    return {
+      resources: []
+    };
+  }
+
+  console.log(`Matching reservation startDt: ${matchingReservation.startDt}`);
+  console.log(`Resources count: ${matchingReservation.res.length}`);
+  console.log('Raw resources:', matchingReservation.res);
+
+  // Map the res array to just itemName, quantity, and instruction
+  const simplifiedResources = matchingReservation.res.map(resource => ({
     itemName: resource.itemName,
-    quantity: resource.quantity
+    quantity: resource.quantity,
+    instruction: resource.instruction
   }));
 
+  console.log('Simplified resources:', simplifiedResources);
+  console.log(`=== END DEBUG for event ${event.itemId} ===\n`);
+
   return {
-    hasVideoRecording,
-    hasHandheldMic,
-    hasStaffAssistance,
-    hasWebConference,
-    hasClickers,
     resources: simplifiedResources
   };
 };

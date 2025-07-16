@@ -35,9 +35,15 @@ async function saveToSupabase(processedEvents) {
     try {
         console.log(`Saving ${processedEvents.length} events to Supabase...`);
         
+        // Add updated_at timestamp to each event
+        const eventsWithTimestamp = processedEvents.map(event => ({
+            ...event,
+            updated_at: new Date().toISOString()
+        }));
+        
         const { data: result, error } = await supabase
             .from('events')
-            .upsert(processedEvents, {
+            .upsert(eventsWithTimestamp, {
                 onConflict: 'id',
                 ignoreDuplicates: false
             });
@@ -226,11 +232,6 @@ async function fetchData(startDate) {
         
         // Save to Supabase
         await saveToSupabase(processedData);
-        
-        // Also save locally as backup
-        const outputPath = `output-${date}.json`;
-        fs.writeFileSync(outputPath, JSON.stringify(processedData, null, 2));
-        console.log(`Data saved to ${outputPath}`);
 
     } catch (error) {
         console.error('Error in main process:', error);
