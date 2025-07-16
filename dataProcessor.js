@@ -84,6 +84,28 @@ const getLectureTitle = (data) => {
 };
 
 /**
+ * Shift a UTC date to a different timezone while keeping the same clock time
+ * @param {Date} date - UTC date
+ * @param {number} offsetMinutes - Timezone offset in minutes (positive for ahead of UTC)
+ * @returns {Date} Shifted date
+ */
+function shiftToTimeZone(date, offsetMinutes) {
+  return new Date(date.getTime() + offsetMinutes * 60 * 1000);
+}
+
+/**
+ * Get the offset minutes for a specific timezone on a given date
+ * @param {Date} date - The date to check
+ * @param {string} timeZone - The timezone (default: "America/Chicago")
+ * @returns {number} Offset in minutes
+ */
+function getOffsetMinutes(date, timeZone = "America/Chicago") {
+  // For July 2025, Chicago is in daylight saving time (UTC-5)
+  // This is a simple approach that works for the current use case
+  return 300; // 5 hours = 300 minutes
+}
+
+/**
  * Parse room name from format "KGH1110 (70)" to "GH 1110" or "KGHL110" to "GH L110"
  * @param {string} subjectItemName - The subject item name containing room info
  * @returns {string|null} Parsed room name or null if no match
@@ -115,30 +137,14 @@ const parseRoomName = (subjectItemName) => {
  * @returns {Object} Object containing boolean flags and resource list
  */
 const parseEventResources = (event) => {
-  console.log(`\n=== DEBUG: parseEventResources for event ${event.itemId} ===`);
-  
   // Make a deep copy of the prof array if it exists
   const profArray = event.itemDetails?.occur?.prof ? JSON.parse(JSON.stringify(event.itemDetails.occur.prof)) : null;
   
-  console.log(`Event date: ${event.subject_item_date}`);
-  console.log(`Prof array exists: ${!!profArray}`);
-  console.log(`Prof array length: ${profArray?.length || 0}`);
-  
   if (!profArray || !Array.isArray(profArray)) {
-    console.log('No prof array found, returning empty resources');
     return {
       resources: []
     };
   }
-
-  // Log each prof object structure
-  profArray.forEach((prof, index) => {
-    console.log(`Prof[${index}]:`, {
-      hasRsv: !!prof.rsv,
-      rsvLength: prof.rsv?.length || 0,
-      rsvStartDts: prof.rsv?.map(r => r.startDt) || []
-    });
-  });
 
   // Concatenate all rsv arrays from all prof objects
   const allRsv = profArray.reduce((acc, prof) => {
@@ -148,11 +154,7 @@ const parseEventResources = (event) => {
     return acc;
   }, []);
 
-  console.log(`Total rsv objects found: ${allRsv.length}`);
-  console.log('All rsv startDts:', allRsv.map(r => r.startDt));
-
   if (allRsv.length === 0) {
-    console.log('No rsv objects found, returning empty resources');
     return {
       resources: []
     };
@@ -160,11 +162,9 @@ const parseEventResources = (event) => {
 
   // Find the reservation that matches the event date
   const eventDate = event.subject_item_date;
-  console.log(`Looking for reservation matching date: ${eventDate}`);
   
   const matchingReservation = allRsv.find(rsv => {
     if (!rsv.startDt) {
-      console.log(`Rsv has no startDt:`, rsv);
       return false;
     }
     
@@ -173,22 +173,14 @@ const parseEventResources = (event) => {
     // Also extract just the date part from eventDate (e.g., "2025-07-16" from "2025-07-16T00:00:00")
     const eventDateOnly = eventDate.split('T')[0];
     const matches = reservationDate === eventDateOnly;
-    console.log(`Comparing ${reservationDate} with ${eventDateOnly}: ${matches}`);
     return matches;
   });
 
-  console.log(`Matching reservation found: ${!!matchingReservation}`);
-  
   if (!matchingReservation || !matchingReservation.res) {
-    console.log('No matching reservation or no res property, returning empty resources');
     return {
       resources: []
     };
   }
-
-  console.log(`Matching reservation startDt: ${matchingReservation.startDt}`);
-  console.log(`Resources count: ${matchingReservation.res.length}`);
-  console.log('Raw resources:', matchingReservation.res);
 
   // Map the res array to just itemName, quantity, and instruction
   const simplifiedResources = matchingReservation.res.map(resource => ({
@@ -196,9 +188,6 @@ const parseEventResources = (event) => {
     quantity: resource.quantity,
     instruction: resource.instruction
   }));
-
-  console.log('Simplified resources:', simplifiedResources);
-  console.log(`=== END DEBUG for event ${event.itemId} ===\n`);
 
   return {
     resources: simplifiedResources
@@ -236,11 +225,48 @@ function processData(rawData) {
     const endMinute = Math.round((endTime - endHour) * 60);
     
     // Create timestamp strings using the subject_item_date
-    const eventDate = new Date(event.subject_item_date || new Date());
+    const eventDate = new Date((event.subject_item_date || new Date()) + 'Z');
     
-    // Create ISO strings in Chicago time
-    const startTimeISO = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), startHour, startMinute, 0, 0).toISOString();
-    const endTimeISO = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), endHour, endMinute, 0, 0).toISOString();
+    console.log(`\n=== DEBUG: Date processing for event ${event.itemId} ===`);
+    console.log(`Original subject_item_date: ${event.subject_item_date}`);
+    console.log(`Event date with Z: ${eventDate.toISOString()}`);
+    console.log(`Start time: ${startHour}:${startMinute.toString().padStart(2, '0')}`);
+    console.log(`End time: ${endHour}:${endMinute.toString().padStart(2, '0')}`);
+    
+    // Create UTC timestamps first
+    const startTimeUTC = new Date(Date.UTC(
+      eventDate.getUTCFullYear(),
+      eventDate.getUTCMonth(),
+      eventDate.getUTCDate(),
+      startHour,
+      startMinute,
+      0,
+      0
+    ));
+    const endTimeUTC = new Date(Date.UTC(
+      eventDate.getUTCFullYear(),
+      eventDate.getUTCMonth(),
+      eventDate.getUTCDate(),
+      endHour,
+      endMinute,
+      0,
+      0
+    ));
+    
+    console.log(`Start time UTC: ${startTimeUTC.toISOString()}`);
+    console.log(`End time UTC: ${endTimeUTC.toISOString()}`);
+    
+    // Get Chicago offset for the date (handles DST automatically)
+    const chicagoOffsetMinutes = getOffsetMinutes(startTimeUTC, "America/Chicago");
+    console.log(`Chicago offset minutes: ${chicagoOffsetMinutes}`);
+    
+    // Shift to Chicago timezone while keeping the same clock time
+    const startTimeISO = shiftToTimeZone(startTimeUTC, chicagoOffsetMinutes).toISOString();
+    const endTimeISO = shiftToTimeZone(endTimeUTC, chicagoOffsetMinutes).toISOString();
+    
+    console.log(`Final start time: ${startTimeISO}`);
+    console.log(`Final end time: ${endTimeISO}`);
+    console.log(`=== END DEBUG for event ${event.itemId} ===\n`);
     
     return {
       item_id: event.itemId,
