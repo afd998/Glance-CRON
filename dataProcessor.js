@@ -33,7 +33,7 @@ const getEventType = (data) => {
     if (panel.typeId === 11) {
       // Check if this is a Kellogg Executive Education Program
       const kelloggProgram = panel.item?.[6]?.item?.[0]?.itemName;
-      if (kelloggProgram === "Kellogg Executive Education Programs") {
+      if (kelloggProgram === "Kellogg Executive Education Programs" || kelloggProgram === "Kellogg Executive MBA Program") {
         return "KEC";
       }
       
