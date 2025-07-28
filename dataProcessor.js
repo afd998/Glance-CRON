@@ -31,6 +31,13 @@ const getEventType = (data) => {
   const panels = data.itemDetails?.defn?.panel || [];
   for (const panel of panels) {
     if (panel.typeId === 11) {
+      // Check if this is a Kellogg Executive Education Program
+      const kelloggProgram = panel.item?.[6]?.item?.[0]?.itemName;
+      if (kelloggProgram === "Kellogg Executive Education Programs") {
+        return "KEC";
+      }
+      
+      // Original logic for other event types
       const eventType = panel.item?.[2]?.itemName;
       if (eventType) return eventType;
     }
