@@ -37,6 +37,12 @@ const getEventType = (data) => {
         return "KEC";
       }
       
+      // Check if this is a CMC program
+      const cmcProgram = panel.item?.[8]?.item?.[0]?.itemName;
+      if (cmcProgram === "RES CMC, KSM") {
+        return "CMC";
+      }
+      
       // Original logic for other event types
       const eventType = panel.item?.[2]?.itemName;
       if (eventType) return eventType;
