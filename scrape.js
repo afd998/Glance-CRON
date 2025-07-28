@@ -63,9 +63,26 @@ async function saveToSupabase(processedEvents, scrapeDate) {
         // Create a set of current event IDs for quick lookup
         const currentEventIds = new Set();
         processedEvents.forEach(event => {
-            // Use the same ID generation logic as in dataProcessor
-            const eventId = generateDeterministicId(event.item_id, event.item_id2, event.subject_itemId);
-            currentEventIds.add(eventId);
+            // Debug: Log the event structure to see what we're working with
+            console.log('Processing event:', {
+                id: event.id,
+                item_id: event.item_id,
+                item_id2: event.item_id2,
+                hasId: !!event.id,
+                hasItemId: !!event.item_id,
+                hasItemId2: !!event.item_id2
+            });
+            
+            // Use the already-generated ID from dataProcessor
+            if (event.id) {
+                currentEventIds.add(event.id);
+            } else {
+                console.warn('Skipping event with missing ID:', {
+                    id: event.id,
+                    item_id: event.item_id,
+                    item_id2: event.item_id2
+                });
+            }
         });
         
         // Find events that exist in database but not in current scrape (deleted events)
@@ -111,25 +128,7 @@ async function saveToSupabase(processedEvents, scrapeDate) {
     }
 }
 
-// Helper function to generate deterministic ID (same as in dataProcessor)
-function generateDeterministicId(itemId, itemId2, subjectItemId) {
-    // Create a deterministic ID that combines the three numbers in a way that's guaranteed unique
-    // and fits within PostgreSQL int8 limits (19 digits max)
-    
-    // Convert to strings and pad to ensure consistent length
-    const itemIdStr = itemId.toString().padStart(10, '0');
-    const itemId2Str = itemId2.toString().padStart(10, '0');
-    const subjectItemIdStr = subjectItemId.toString().padStart(5, '0');
-    
-    // Take the last 6 digits of each to keep the total manageable
-    const itemIdPart = parseInt(itemIdStr.slice(-6));
-    const itemId2Part = parseInt(itemId2Str.slice(-6));
-    const subjectPart = parseInt(subjectItemIdStr.slice(-5));
-    
-    // Combine using a formula that ensures uniqueness
-    // This will produce a number around 15-16 digits, well within int8 limits
-    return itemIdPart * 1000000000 + itemId2Part * 10000 + subjectPart;
-}
+
 
 async function fetchData(startDate) {
   try {
