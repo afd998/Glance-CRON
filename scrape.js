@@ -43,17 +43,11 @@ async function saveToSupabase(processedEvents, scrapeDate) {
         
         // First, get all existing events for this date to identify which ones are no longer present
         console.log('Fetching existing events for comparison...');
-        const startOfDay = new Date(scrapeDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        
-        const endOfDay = new Date(scrapeDate);
-        endOfDay.setDate(endOfDay.getDate() + 1);
         
         const { data: existingEvents, error: fetchError } = await supabase
             .from('events')
             .select('id, item_id, item_id2')
-            .gte('start_time', startOfDay.toISOString())
-            .lt('start_time', endOfDay.toISOString());
+            .eq('date', scrapeDate);
         
         if (fetchError) {
             console.error('Error fetching existing events:', fetchError);

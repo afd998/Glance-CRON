@@ -96,27 +96,7 @@ const getLectureTitle = (data) => {
   return null;
 };
 
-/**
- * Shift a UTC date to a different timezone while keeping the same clock time
- * @param {Date} date - UTC date
- * @param {number} offsetMinutes - Timezone offset in minutes (positive for ahead of UTC)
- * @returns {Date} Shifted date
- */
-function shiftToTimeZone(date, offsetMinutes) {
-  return new Date(date.getTime() + offsetMinutes * 60 * 1000);
-}
 
-/**
- * Get the offset minutes for a specific timezone on a given date
- * @param {Date} date - The date to check
- * @param {string} timeZone - The timezone (default: "America/Chicago")
- * @returns {number} Offset in minutes
- */
-function getOffsetMinutes(date, timeZone = "America/Chicago") {
-  // For July 2025, Chicago is in daylight saving time (UTC-5)
-  // This is a simple approach that works for the current use case
-  return 300; // 5 hours = 300 minutes
-}
 
 /**
  * Parse room name from format "KGH1110 (70)" to "GH 1110" or "KGHL110" to "GH L110"
@@ -227,7 +207,7 @@ function processData(rawData) {
   console.log(`Filtered out ${rawData.length - filteredData.length} events with itemId/itemId2 equal to 0 or containing ampersand in room name`);
   
   return filteredData.map(event => {
-    // Convert time strings to timestamps
+    // Convert time strings to hours and minutes
     const startTime = parseFloat(event.start);
     const endTime = parseFloat(event.end);
     
@@ -237,48 +217,18 @@ function processData(rawData) {
     const endHour = Math.floor(endTime);
     const endMinute = Math.round((endTime - endHour) * 60);
     
-    // Create timestamp strings using the subject_item_date
-    const eventDate = new Date((event.subject_item_date || new Date()) + 'Z');
+    // Format time strings for database (HH:MM:SS format)
+    const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}:00`;
+    const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}:00`;
     
-    console.log(`\n=== DEBUG: Date processing for event ${event.itemId} ===`);
+    // Extract just the date part from subject_item_date (YYYY-MM-DD format)
+    const eventDate = event.subject_item_date ? event.subject_item_date.split('T')[0] : new Date().toISOString().split('T')[0];
+    
+    console.log(`\n=== DEBUG: Date/Time processing for event ${event.itemId} ===`);
     console.log(`Original subject_item_date: ${event.subject_item_date}`);
-    console.log(`Event date with Z: ${eventDate.toISOString()}`);
-    console.log(`Start time: ${startHour}:${startMinute.toString().padStart(2, '0')}`);
-    console.log(`End time: ${endHour}:${endMinute.toString().padStart(2, '0')}`);
-    
-    // Create UTC timestamps first
-    const startTimeUTC = new Date(Date.UTC(
-      eventDate.getUTCFullYear(),
-      eventDate.getUTCMonth(),
-      eventDate.getUTCDate(),
-      startHour,
-      startMinute,
-      0,
-      0
-    ));
-    const endTimeUTC = new Date(Date.UTC(
-      eventDate.getUTCFullYear(),
-      eventDate.getUTCMonth(),
-      eventDate.getUTCDate(),
-      endHour,
-      endMinute,
-      0,
-      0
-    ));
-    
-    console.log(`Start time UTC: ${startTimeUTC.toISOString()}`);
-    console.log(`End time UTC: ${endTimeUTC.toISOString()}`);
-    
-    // Get Chicago offset for the date (handles DST automatically)
-    const chicagoOffsetMinutes = getOffsetMinutes(startTimeUTC, "America/Chicago");
-    console.log(`Chicago offset minutes: ${chicagoOffsetMinutes}`);
-    
-    // Shift to Chicago timezone while keeping the same clock time
-    const startTimeISO = shiftToTimeZone(startTimeUTC, chicagoOffsetMinutes).toISOString();
-    const endTimeISO = shiftToTimeZone(endTimeUTC, chicagoOffsetMinutes).toISOString();
-    
-    console.log(`Final start time: ${startTimeISO}`);
-    console.log(`Final end time: ${endTimeISO}`);
+    console.log(`Extracted date: ${eventDate}`);
+    console.log(`Start time: ${startTimeStr}`);
+    console.log(`End time: ${endTimeStr}`);
     console.log(`=== END DEBUG for event ${event.itemId} ===\n`);
     
     return {
@@ -286,8 +236,9 @@ function processData(rawData) {
       item_id2: event.itemId2,
       // Generate a deterministic ID from the source data for upsert operations
       id: generateDeterministicId(event.itemId, event.itemId2, event.subject_itemId),
-      start_time: startTimeISO,
-      end_time: endTimeISO,
+      date: eventDate,
+      start_time: startTimeStr,
+      end_time: endTimeStr,
       event_name: event.itemName,
       event_type: getEventType(event),
       instructor_name: getInstructorName(event),
