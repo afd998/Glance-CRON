@@ -198,8 +198,10 @@ function processData(rawData) {
   console.log(`Processing ${rawData.length} events to extract additional properties...`);
   
   // Filter out events where itemId or itemId2 equals 0, or subject_itemName contains ampersand
+  // BUT only filter itemId=0 if the event name is "(Private)" - we want to keep real events that happen to have itemId=0
   const filteredData = rawData.filter(event => {
-    return event.itemId !== 0 && 
+    const isPrivateEvent = event.itemId === 0 && (event.itemName === "(Private)" || event.itemName === "Closed");
+    return !isPrivateEvent && 
            event.itemId2 !== 0 && 
            !event.subject_itemName?.includes('&');
   });
@@ -242,11 +244,15 @@ function processData(rawData) {
     console.log(`Event type: ${eventType || 'NONE'}`);
     console.log(`=== END DEBUG for event ${event.itemId} ===\n`);
     
+    const generatedId = generateDeterministicId(event.itemId, event.itemId2, event.subject_itemId);
+    
+    console.log(`ID Generation for event: itemId=${event.itemId}, itemId2=${event.itemId2}, subject_itemId=${event.subject_itemId} => id=${generatedId}`);
+    
     return {
       item_id: event.itemId,
       item_id2: event.itemId2,
       // Generate a deterministic ID from the source data for upsert operations
-      id: generateDeterministicId(event.itemId, event.itemId2, event.subject_itemId),
+      id: generatedId,
       date: eventDate,
       start_time: startTimeStr,
       end_time: endTimeStr,

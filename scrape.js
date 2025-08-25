@@ -35,11 +35,25 @@ async function saveToSupabase(processedEvents, scrapeDate) {
     try {
         console.log(`Saving ${processedEvents.length} events to Supabase...`);
         
-        // Add updated_at timestamp to each event
-        const eventsWithTimestamp = processedEvents.map(event => ({
-            ...event,
-            updated_at: new Date().toISOString()
-        }));
+        // Add updated_at timestamp to each event and validate required fields
+        const eventsWithTimestamp = processedEvents.map(event => {
+            // Validate required fields
+            if (!event.id || !event.item_id || !event.item_id2 || !event.date) {
+                console.error('Invalid event detected:', {
+                    id: event.id,
+                    item_id: event.item_id,
+                    item_id2: event.item_id2,
+                    date: event.date,
+                    event_name: event.event_name
+                });
+                throw new Error(`Event missing required fields: ${JSON.stringify(event)}`);
+            }
+            
+            return {
+                ...event,
+                updated_at: new Date().toISOString()
+            };
+        });
         
         // First, get all existing events for this date to identify which ones are no longer present
         console.log('Fetching existing events for comparison...');
@@ -62,6 +76,9 @@ async function saveToSupabase(processedEvents, scrapeDate) {
                 id: event.id,
                 item_id: event.item_id,
                 item_id2: event.item_id2,
+                subject_itemId: event.raw?.subject_itemId,
+                room_name: event.room_name,
+                event_name: event.event_name,
                 hasId: !!event.id,
                 hasItemId: !!event.item_id,
                 hasItemId2: !!event.item_id2
@@ -79,13 +96,21 @@ async function saveToSupabase(processedEvents, scrapeDate) {
             }
         });
         
+        // Debug: Log the comparison data
+        console.log(`Existing events count: ${existingEvents.length}`);
+        console.log(`Current event IDs count: ${currentEventIds.size}`);
+        console.log('Sample existing event IDs:', existingEvents.slice(0, 3).map(e => e.id));
+        console.log('Sample current event IDs:', Array.from(currentEventIds).slice(0, 3));
+        
         // Find events that exist in database but not in current scrape (deleted events)
         const deletedEventIds = existingEvents
             .filter(existingEvent => !currentEventIds.has(existingEvent.id))
             .map(event => event.id);
         
+        console.log(`Found ${deletedEventIds.length} events to delete from database`);
         if (deletedEventIds.length > 0) {
-            console.log(`Found ${deletedEventIds.length} events that were deleted from 25Live, removing from database...`);
+            console.log('Sample deleted event IDs:', deletedEventIds.slice(0, 5));
+            console.log(`Deleting ${deletedEventIds.length} events that were removed from 25Live...`);
             
             // Delete the events that no longer exist in 25Live
             const { error: deleteError } = await supabase
@@ -99,22 +124,42 @@ async function saveToSupabase(processedEvents, scrapeDate) {
             }
             
             console.log(`Successfully deleted ${deletedEventIds.length} removed events`);
+        } else {
+            console.log('No events need to be deleted');
         }
         
+        // Log what we're about to upsert
+        console.log(`Attempting to upsert ${eventsWithTimestamp.length} events...`);
+        console.log('Sample event for upsert:', JSON.stringify(eventsWithTimestamp[0], null, 2));
+        
         // Then upsert the current events (this will update existing ones and add new ones)
-        const { data: result, error } = await supabase
+        const { data: result, error, status, statusText } = await supabase
             .from('events')
             .upsert(eventsWithTimestamp, {
                 onConflict: 'id',
                 ignoreDuplicates: false
-            });
+            })
+            .select(); // Add select to see what was actually inserted/updated
         
         if (error) {
-            console.error('Supabase error details:', error);
+            console.error('Supabase upsert error details:', {
+                error,
+                status,
+                statusText,
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
             throw error;
         }
         
-        console.log(`Successfully saved ${processedEvents.length} events to Supabase`);
+        console.log(`Successfully upserted ${result ? result.length : 'unknown count'} events to Supabase`);
+        if (result && result.length > 0) {
+            console.log('Sample upserted event:', JSON.stringify(result[0], null, 2));
+        } else {
+            console.warn('WARNING: Upsert returned no data - this might indicate the events were not actually saved!');
+        }
         
     } catch (error) {
         console.error('Error saving to Supabase:', error);
@@ -165,7 +210,10 @@ async function fetchData(startDate) {
           
           // Fetch the availability data with the provided date
           console.log(`Fetching data for date: ${startDate}`);
-          const response = await fetch(`https://25live.collegenet.com/25live/data/northwestern/run/availability/availabilitydata.json?obj_cache_accl=0&start_dt=${startDate}&comptype=availability_home&compsubject=location&page_size=100&space_favorite=T&include=closed+blackouts+pending+related+empty&caller=pro-AvailService.getData`, {
+          const apiUrl = `https://25live.collegenet.com/25live/data/northwestern/run/availability/availabilitydata.json?obj_cache_accl=0&start_dt=${startDate}T00:00:00&comptype=availability_home&compsubject=location&page_size=100&space_query_id=1010979&include=closed+blackouts+pending+related+empty&caller=pro-AvailService.getData`;
+          console.log(`API URL: ${apiUrl}`);
+          
+          const response = await fetch(apiUrl, {
               headers: {
                   'Cookie': cookieString,
                   'Accept': 'application/json',
@@ -175,8 +223,19 @@ async function fetchData(startDate) {
           });
           
           const rawData = await response.json();
+          
+          // Log the actual API response for debugging
+          console.log('=== RAW API RESPONSE DEBUG ===');
           console.log('API Response status:', response.status);
-          console.log('API Response status:', response.status);
+          console.log('Raw data keys:', Object.keys(rawData));
+          console.log('Number of subjects:', rawData.subjects ? rawData.subjects.length : 0);
+          if (rawData.subjects && rawData.subjects.length > 0) {
+              console.log('First subject sample:', JSON.stringify(rawData.subjects[0], null, 2));
+              if (rawData.subjects[0].items && rawData.subjects[0].items.length > 0) {
+                  console.log('First item sample:', JSON.stringify(rawData.subjects[0].items[0], null, 2));
+              }
+          }
+          console.log('=== END RAW API RESPONSE DEBUG ===');
           console.log('API Response data structure:', {
               hasSubjects: !!rawData.subjects,
               pageCount: rawData.page_count,
