@@ -26,11 +26,11 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
       
       - name: Install dependencies
         run: |
-          rm -rf node_modules package-lock.json
-          npm install --verbose
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
       
       - name: Install Playwright
         run: npx playwright install --with-deps chromium

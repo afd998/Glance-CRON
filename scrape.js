@@ -232,9 +232,25 @@ async function fetchData(startDate) {
               }, []);
           console.log(`Processing ${processedData.length} items...`);
           
+          // Log some sample data to understand structure
+          if (processedData.length > 0) {
+              console.log('Sample event structure:', {
+                  itemId: processedData[0].itemId,
+                  itemName: processedData[0].itemName,
+                  subject_itemName: processedData[0].subject_itemName,
+                  start: processedData[0].start,
+                  end: processedData[0].end
+              });
+          }
+
           // Make all API requests in parallel using fetch
-          const detailPromises = processedData.map(async (item) => {
+          const detailPromises = processedData.map(async (item, index) => {
               try {
+                  // Add small delay to prevent overwhelming the server
+                  if (index > 0 && index % 5 === 0) {
+                      await new Promise(resolve => setTimeout(resolve, 200));
+                  }
+                  
                   console.log(`Fetching details for item ${item.itemId}...`);
                   const itemDetailsResponse = await fetch(
                       `https://25live.collegenet.com/25live/data/northwestern/run/event/detail/evdetail.json?event_id=${item.itemId}&caller=pro-EvdetailDao.get`,
@@ -263,6 +279,22 @@ async function fetchData(startDate) {
 
           // Wait for all requests to complete
           const finalData = await Promise.all(detailPromises);
+          
+          // Log summary of detail fetching
+          const eventsWithDetails = finalData.filter(event => event.itemDetails);
+          const eventsWithoutDetails = finalData.filter(event => !event.itemDetails);
+          
+          console.log(`Detail fetching summary:`);
+          console.log(`- Total events: ${finalData.length}`);
+          console.log(`- Events with details: ${eventsWithDetails.length}`);
+          console.log(`- Events without details: ${eventsWithoutDetails.length}`);
+          
+          if (eventsWithoutDetails.length > 0) {
+              console.log('Events missing details:');
+              eventsWithoutDetails.forEach(event => {
+                  console.log(`  - ${event.itemId}: ${event.itemName}`);
+              });
+          }
           
           return finalData;
           

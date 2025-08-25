@@ -224,11 +224,22 @@ function processData(rawData) {
     // Extract just the date part from subject_item_date (YYYY-MM-DD format)
     const eventDate = event.subject_item_date ? event.subject_item_date.split('T')[0] : new Date().toISOString().split('T')[0];
     
+    // Get event type and log if missing
+    const eventType = getEventType(event);
+    if (!eventType) {
+      console.log(`WARNING: No event type found for event ${event.itemId} - ${event.itemName}`);
+      console.log(`Event has itemDetails: ${!!event.itemDetails}`);
+      if (event.itemDetails?.defn?.panel) {
+        console.log(`Panel count: ${event.itemDetails.defn.panel.length}`);
+      }
+    }
+    
     console.log(`\n=== DEBUG: Date/Time processing for event ${event.itemId} ===`);
     console.log(`Original subject_item_date: ${event.subject_item_date}`);
     console.log(`Extracted date: ${eventDate}`);
     console.log(`Start time: ${startTimeStr}`);
     console.log(`End time: ${endTimeStr}`);
+    console.log(`Event type: ${eventType || 'NONE'}`);
     console.log(`=== END DEBUG for event ${event.itemId} ===\n`);
     
     return {
@@ -240,7 +251,7 @@ function processData(rawData) {
       start_time: startTimeStr,
       end_time: endTimeStr,
       event_name: event.itemName,
-      event_type: getEventType(event),
+      event_type: eventType,
       instructor_name: getInstructorName(event),
       lecture_title: getLectureTitle(event),
       room_name: parseRoomName(event.subject_itemName),
