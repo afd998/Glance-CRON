@@ -210,7 +210,7 @@ async function fetchData(startDate) {
           
           // Fetch the availability data with the provided date
           console.log(`Fetching data for date: ${startDate}`);
-          const apiUrl = `https://25live.collegenet.com/25live/data/northwestern/run/availability/availabilitydata.json?obj_cache_accl=0&start_dt=${startDate}T00:00:00&comptype=availability_home&compsubject=location&page_size=100&space_query_id=1010979&include=closed+blackouts+pending+related+empty&caller=pro-AvailService.getData`;
+          const apiUrl = `https://25live.collegenet.com/25live/data/northwestern/run/availability/availabilitydata.json?obj_cache_accl=0&start_dt=${startDate}T00:00:00&comptype=availability_home&compsubject=location&page_size=100&space_favorite=T&include=closed+blackouts+pending+related+empty&caller=pro-AvailService.getData`;
           console.log(`API URL: ${apiUrl}`);
           
           const response = await fetch(apiUrl, {
