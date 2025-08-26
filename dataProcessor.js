@@ -187,6 +187,99 @@ const parseEventResources = (event) => {
   };
 };
 
+/**
+ * Merge events from adjacent rooms that have the same event name and start time
+ * Handles: 1420 & 1430 -> 1420&30, 2410A & 2410B -> 2410A&B, and 2420A & 2420B -> 2420A&B
+ * @param {Array} events - Array of processed events
+ * @returns {Array} Array with merged events
+ */
+function mergeAdjacentRoomEvents(events) {
+  console.log(`Merging adjacent room events (1420 & 1430, 2410A & 2410B, 2420A & 2420B)...`);
+  
+  // Group events by date, event_name, and start_time to find potential matches
+  const eventGroups = events.reduce((groups, event) => {
+    const key = `${event.date}_${event.event_name}_${event.start_time}`;
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(event);
+    return groups;
+  }, {});
+
+  const mergedEvents = [];
+  let mergeCount1420 = 0;
+  let mergeCount2410 = 0;
+  let mergeCount2420 = 0;
+
+  Object.values(eventGroups).forEach(eventGroup => {
+    if (eventGroup.length === 1) {
+      // No potential matches, keep the event as is
+      mergedEvents.push(eventGroup[0]);
+      return;
+    }
+
+    // Look for 1420 and 1430 room pairs
+    const room1420 = eventGroup.find(e => e.room_name === 'GH 1420');
+    const room1430 = eventGroup.find(e => e.room_name === 'GH 1430');
+    
+    // Look for 2410A and 2410B room pairs
+    const room2410A = eventGroup.find(e => e.room_name === 'GH 2410A');
+    const room2410B = eventGroup.find(e => e.room_name === 'GH 2410B');
+    
+    // Look for 2420A and 2420B room pairs
+    const room2420A = eventGroup.find(e => e.room_name === 'GH 2420A');
+    const room2420B = eventGroup.find(e => e.room_name === 'GH 2420B');
+    
+    let processedEvents = new Set(); // Track which events we've already processed
+    
+    if (room1420 && room1430) {
+      // Found a 1420/1430 pair! Merge them
+      const mergedEvent = {
+        ...room1420,
+        room_name: 'GH 1420&30'
+      };
+      mergedEvents.push(mergedEvent);
+      mergeCount1420++;
+      processedEvents.add(room1420);
+      processedEvents.add(room1430);
+    }
+    
+    if (room2410A && room2410B) {
+      // Found a 2410A/2410B pair! Merge them
+      const mergedEvent = {
+        ...room2410A,
+        room_name: 'GH 2410A&B'
+      };
+      mergedEvents.push(mergedEvent);
+      mergeCount2410++;
+      processedEvents.add(room2410A);
+      processedEvents.add(room2410B);
+    }
+    
+    if (room2420A && room2420B) {
+      // Found a 2420A/2420B pair! Merge them
+      const mergedEvent = {
+        ...room2420A,
+        room_name: 'GH 2420A&B'
+      };
+      mergedEvents.push(mergedEvent);
+      mergeCount2420++;
+      processedEvents.add(room2420A);
+      processedEvents.add(room2420B);
+    }
+    
+    // Add any other events in this group that weren't processed in merging
+    eventGroup.forEach(event => {
+      if (!processedEvents.has(event)) {
+        mergedEvents.push(event);
+      }
+    });
+  });
+
+  console.log(`Merged ${mergeCount1420} pairs of 1420/1430 events, ${mergeCount2410} pairs of 2410A/2410B events, and ${mergeCount2420} pairs of 2420A/2420B events`);
+  return mergedEvents;
+}
+
 // Process the raw event data to extract and add processed properties
 function processData(rawData) {
   // Handle case where rawData is undefined (no events)
@@ -208,7 +301,8 @@ function processData(rawData) {
   
   console.log(`Filtered out ${rawData.length - filteredData.length} events with itemId/itemId2 equal to 0 or containing ampersand in room name`);
   
-  return filteredData.map(event => {
+  // First, process all events with room parsing
+  const processedEvents = filteredData.map(event => {
     // Convert time strings to hours and minutes
     const startTime = parseFloat(event.start);
     const endTime = parseFloat(event.end);
@@ -265,6 +359,11 @@ function processData(rawData) {
       raw: event
     };
   });
+
+  // Now merge adjacent room events (1420 & 1430)
+  const mergedEvents = mergeAdjacentRoomEvents(processedEvents);
+  
+  return mergedEvents;
 }
 
 module.exports = {
@@ -274,5 +373,6 @@ module.exports = {
   getLectureTitle,
   parseRoomName,
   parseEventResources,
-  generateDeterministicId
+  generateDeterministicId,
+  mergeAdjacentRoomEvents
 }; 
