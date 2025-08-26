@@ -189,12 +189,12 @@ const parseEventResources = (event) => {
 
 /**
  * Merge events from adjacent rooms that have the same event name and start time
- * Handles: 1420 & 1430 -> 1420&30, 2410A & 2410B -> 2410A&B, and 2420A & 2420B -> 2420A&B
+ * Handles: 1420 & 1430 -> 1420&30, 2410A & 2410B -> 2410A&B, 2420A & 2420B -> 2420A&B, and 2430A & 2430B -> 2430A&B
  * @param {Array} events - Array of processed events
  * @returns {Array} Array with merged events
  */
 function mergeAdjacentRoomEvents(events) {
-  console.log(`Merging adjacent room events (1420 & 1430, 2410A & 2410B, 2420A & 2420B)...`);
+  console.log(`Merging adjacent room events (1420 & 1430, 2410A & 2410B, 2420A & 2420B, 2430A & 2430B)...`);
   
   // Group events by date, event_name, and start_time to find potential matches
   const eventGroups = events.reduce((groups, event) => {
@@ -210,6 +210,7 @@ function mergeAdjacentRoomEvents(events) {
   let mergeCount1420 = 0;
   let mergeCount2410 = 0;
   let mergeCount2420 = 0;
+  let mergeCount2430 = 0;
 
   Object.values(eventGroups).forEach(eventGroup => {
     if (eventGroup.length === 1) {
@@ -229,6 +230,10 @@ function mergeAdjacentRoomEvents(events) {
     // Look for 2420A and 2420B room pairs
     const room2420A = eventGroup.find(e => e.room_name === 'GH 2420A');
     const room2420B = eventGroup.find(e => e.room_name === 'GH 2420B');
+    
+    // Look for 2430A and 2430B room pairs
+    const room2430A = eventGroup.find(e => e.room_name === 'GH 2430A');
+    const room2430B = eventGroup.find(e => e.room_name === 'GH 2430B');
     
     let processedEvents = new Set(); // Track which events we've already processed
     
@@ -268,6 +273,18 @@ function mergeAdjacentRoomEvents(events) {
       processedEvents.add(room2420B);
     }
     
+    if (room2430A && room2430B) {
+      // Found a 2430A/2430B pair! Merge them
+      const mergedEvent = {
+        ...room2430A,
+        room_name: 'GH 2430A&B'
+      };
+      mergedEvents.push(mergedEvent);
+      mergeCount2430++;
+      processedEvents.add(room2430A);
+      processedEvents.add(room2430B);
+    }
+    
     // Add any other events in this group that weren't processed in merging
     eventGroup.forEach(event => {
       if (!processedEvents.has(event)) {
@@ -276,7 +293,7 @@ function mergeAdjacentRoomEvents(events) {
     });
   });
 
-  console.log(`Merged ${mergeCount1420} pairs of 1420/1430 events, ${mergeCount2410} pairs of 2410A/2410B events, and ${mergeCount2420} pairs of 2420A/2420B events`);
+  console.log(`Merged ${mergeCount1420} pairs of 1420/1430 events, ${mergeCount2410} pairs of 2410A/2410B events, ${mergeCount2420} pairs of 2420A/2420B events, and ${mergeCount2430} pairs of 2430A/2430B events`);
   return mergedEvents;
 }
 
