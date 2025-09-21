@@ -1,0 +1,39 @@
+name: Academic Calendar Scrape
+
+on:
+  schedule:
+    - cron: '0 2 1 * *'  # First day of every month at 2 AM UTC
+  workflow_dispatch:  # Manual trigger option
+
+permissions:
+  contents: read
+
+jobs:
+  scrape-academic-calendar:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run academic calendar scraper
+        run: node academicCalendarScrape.js 

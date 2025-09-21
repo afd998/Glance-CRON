@@ -1,0 +1,242 @@
+name: Scrape Calendar Data
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scrape-window-1:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [-80, -79, -78, -77, -76, -75, -74, -73, -72, -71, -70, -69, -68, -67, -66, -65, -64, -63, -62, -61]  # -80 to -61
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-2:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [-60, -59, -58, -57, -56, -55, -54, -53, -52, -51, -50, -49, -48, -47, -46, -45, -44, -43, -42, -41]  # -60 to -41
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-3:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [-40, -39, -38, -37, -36, -35, -34, -33, -32, -31, -30, -29, -28, -27, -26, -25, -24, -23, -22, -21]  # -40 to -21
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-4:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [-20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1]  # -20 to -1
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-5:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]  # 0 to 19
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-6:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]  # 20 to 39
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-7:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]  # 40 to 59
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
+
+  scrape-window-8:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offset: [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79]  # 60 to 79
+      max-parallel: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
+      NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      - name: Install dependencies
+        run: |
+          npm ci --verbose --registry=https://registry.npmjs.org/ --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 || (echo "npm ci failed, trying npm install..." && sleep 30 && npm install --verbose --registry=https://registry.npmjs.org/ --fetch-retries=3 --fetch-retry-mintimeout=30000)
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node scrape.js ${{ matrix.offset }}
