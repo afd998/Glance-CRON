@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -36,4 +36,4 @@ jobs:
         run: npx playwright install --with-deps chromium
       
       - name: Run academic calendar scraper
-        run: node academicCalendarScrape.js 
+        run: node academicCalendarScrape.js

@@ -16,7 +16,7 @@ try {
 }
 
 // Initialize Supabase client
-const supabase = createClient(config.supabase.url, config.supabase.key);
+const supabase = createClient(config.supabase.url, config.supabase.serviceKey);
 
 let browser;
 

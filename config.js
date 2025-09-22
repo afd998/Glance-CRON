@@ -9,7 +9,7 @@ const config = {
   // Supabase configuration
   supabase: {
     url: process.env.SUPABASE_URL,
-    key: process.env.SUPABASE_ANON_KEY
+    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY
   },
   
   // Northwestern credentials
@@ -41,7 +41,7 @@ const config = {
   validate() {
     const required = [
       'SUPABASE_URL',
-      'SUPABASE_ANON_KEY',
+      'SUPABASE_SERVICE_ROLE_KEY',
       'NORTHWESTERN_USERNAME',
       'NORTHWESTERN_PASSWORD'
     ];
