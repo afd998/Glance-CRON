@@ -17,7 +17,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -46,7 +46,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -75,7 +75,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -104,7 +104,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -133,7 +133,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -162,7 +162,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -191,7 +191,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
@@ -220,7 +220,7 @@ jobs:
       max-parallel: 5
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       NORTHWESTERN_USERNAME: ${{ secrets.NORTHWESTERN_USERNAME }}
       NORTHWESTERN_PASSWORD: ${{ secrets.NORTHWESTERN_PASSWORD }}
     steps:
