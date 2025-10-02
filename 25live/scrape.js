@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 const dayjs = require('dayjs');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
-const config = require('./config');
+const config = require('../config');
 const { processData } = require('./dataProcessor');
 
 // Validate configuration
