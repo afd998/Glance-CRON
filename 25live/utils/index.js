@@ -144,18 +144,16 @@ const parseRoomName = (subjectItemName) => {
 };
 
 /**
- * Parse event resources and return both boolean flags and full resource list
+ * Parse event resources for the reservation that matches the event date.
  * @param {Object} event - The event object
- * @returns {Object} Object containing boolean flags and resource list
+ * @returns {Array} Array of simplified resource objects
  */
 const parseEventResources = (event) => {
   // Make a deep copy of the prof array if it exists
   const profArray = event.itemDetails?.occur?.prof ? JSON.parse(JSON.stringify(event.itemDetails.occur.prof)) : null;
   
   if (!profArray || !Array.isArray(profArray)) {
-    return {
-      resources: []
-    };
+    return [];
   }
 
   // Concatenate all rsv arrays from all prof objects
@@ -167,9 +165,7 @@ const parseEventResources = (event) => {
   }, []);
 
   if (allRsv.length === 0) {
-    return {
-      resources: []
-    };
+    return [];
   }
 
   // Find the reservation that matches the event date
@@ -189,9 +185,7 @@ const parseEventResources = (event) => {
   });
 
   if (!matchingReservation || !matchingReservation.res) {
-    return {
-      resources: []
-    };
+    return [];
   }
 
   // Map the res array to just itemName, quantity, and instruction
@@ -201,9 +195,7 @@ const parseEventResources = (event) => {
     instruction: resource.instruction
   }));
 
-  return {
-    resources: simplifiedResources
-  };
+  return simplifiedResources;
 };
 
 /**
